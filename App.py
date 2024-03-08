@@ -8,16 +8,77 @@ import base64
 from PIL import Image
 import nltk
 from Base import BaseATS
-
 from Preprocessing_Parsing import ResumeProcessor
+#from Matching import Match
 from JD import Job_Description
 from Match import Matching
-
+# nltk.download('wordnet')
+# nltk.download('punkt')
+# nltk.download('stopwords')
 Base_ATS = BaseATS()
+#Match_ATS = Match()
+
 Job_Des = Job_Description()
 Scoring = Matching()
 
+from PIL import Image
+
+# Display circular image with reduced size
+image_path = "circle_logo.png"
+st.set_page_config(page_icon=image_path, page_title="Applicant Tracking System")
+
+# Displaying Applicant Missing Skill on FeedBack Page
+if 'clicked_feedback_button' not in st.session_state:
+    st.session_state.clicked_feedback_button = False
+    
+def display_team_member(name, github_url, linkedin_url):
+    # Center-align the content
+    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+    
+    st.write(f"<p style='font-weight: bold; font-size: larger; margin-bottom: 0;'>{name}</p>", unsafe_allow_html=True)
+    
+    # Display GitHub link with logo
+    st.markdown(f'<div style="display: flex; justify-content: center;"><a href="{github_url}"><img src="https://cdn.jsdelivr.net/npm/simple-icons/icons/github.svg" alt="GitHub" width="20"></a><a href="{github_url}" style="margin-left: 5px;">GitHub</a></div>', unsafe_allow_html=True)
+    
+    # Display LinkedIn link with logo
+    st.markdown(f'<div style="display: flex; justify-content: center;"><a href="{linkedin_url}"><img src="https://cdn.jsdelivr.net/npm/simple-icons/icons/linkedin.svg" alt="LinkedIn" width="20"></a><a href="{linkedin_url}" style="margin-left: 5px;">LinkedIn</a></div>', unsafe_allow_html=True)
+    
+    # Close the center-align div
+    st.markdown("</div>", unsafe_allow_html=True)
+
 def main():
+
+    @st.cache_data
+    def get_img_as_base64(file_path):
+        with open(file_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+
+    img = get_img_as_base64("Background.jpg")
+
+    page_bg_img = f"""
+    <style>
+        .stApp {{
+            background-image: url("data:image/jpeg;base64,{img}");
+            background-size: cover;
+            height: 100vh; /* Adjust the height as needed */
+        }}
+
+        .stHeader {{
+            background-image: url("data:image/jpeg;base64,{img}");
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white; /* Text color for the header */
+        }}
+
+        .stToolbar {{
+            background-image: url("data:image/jpeg;base64,{img}");
+            right: 2rem;
+        }}
+    </style>
+    """
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
+ 
 
     # Get the absolute path of the currently executing Python script in Streamlit
     script_path = os.path.realpath(__file__)
@@ -25,6 +86,8 @@ def main():
     folder_path = os.path.dirname(script_path)
     json_path = folder_path+"/JSON"
 
+    
+    st.sidebar.image(image_path,width=250)
     with st.sidebar:
         choice = option_menu("Main Menu", ["Home", "ATS Matcher", "FeedBack Page","About Us" ], 
             icons=['house', 'cloud-upload', 'gear', 'people'], menu_icon="list", default_index=0)
@@ -49,6 +112,14 @@ def main():
         st.markdown(intro4, unsafe_allow_html=True)
         st.markdown(intro5, unsafe_allow_html=True)
         st.markdown(intro6, unsafe_allow_html=True)
+
+        ##Video path
+        
+        st.caption("The right match for your resource needs. Watch the below video!!!") 
+        video_path = "HomePage_Video.mp4"
+        st.video(video_path)
+        
+
 
     if choice=="ATS Matcher":
         st.title('Resume And Job Description')
@@ -120,7 +191,7 @@ def main():
             st.subheader('Common Words between Resume and Job Description')
             common = Base_ATS.find_common_words_dict(cleaned_resume,cleaned_jd)  
             st.write(common)
-            # skill_pattern="D:\\Designing\\experimento\\jz_skill_patterns.jsonl"
+            
             skill_pattern="jz_skill_patterns.jsonl"
             ner=spacy.load('en_core_web_lg')
             entity_ruler=ner.add_pipe("entity_ruler")
@@ -140,7 +211,17 @@ def main():
             st.markdown(html, unsafe_allow_html=True)
             resume_skills = resume_processor.extracting_entities(resume)["SKILL"]
             st.session_state.resume_skills=resume_skills
-            st.write('')
+            # st.write(resume_skills)
+            # labelled_entities=resume_processor.extracting_entities(doc)
+            #st.markdown(json.dumps(labelled_entities,indent=2))
+            #st.json(labelled_entities)
+            # resume_name = docx_file.name
+            # jd_name = docx_file1.name
+            # resume_name = resume_name.split('.')[0].strip()
+            # resume_name = resume_name + ".json"
+            # #st.write(resume_name)
+            # Base_ATS.save_json_file(labelled_entities, json_path, resume_name)
+            # st.write('')
         if st.button("Process JD ", key="process_jd_button"):
             jd = st.session_state.raw_text1
             job_emails=st.session_state.jemails
@@ -155,7 +236,6 @@ def main():
             jd_skills = Job_Des.jd_skill(cleaned_jd)
             st.session_state.jd_skills=jd_skills
             st.write(jd_skills)
-            st.write('')
         if st.button("Match Results"):
             resume_name = docx_file.name
             jd_name = docx_file1.name
@@ -163,6 +243,7 @@ def main():
             res_skills = st.session_state.resume_skills
             res_skills_str = ' '.join(res_skills)
             job_skills_str = ' '.join(jobd_skills)
+            st.write("Done")
             corpus = [res_skills_str, job_skills_str]
             # st.write(corpus)
             score, missing_skills = Scoring.cal_cosine_similarity(res_skills_str, job_skills_str, corpus)
@@ -173,18 +254,22 @@ def main():
             else:
                 st.write(f"<h5><b><span style='color: #fd971f;'>{os.path.basename(resume_name)} is Not Recommended for {os.path.basename(jd_name)}</span></b></h5>", unsafe_allow_html=True)
                 st.write(f"<h5><b><span style='color: #fd971f;'>Score: {score}</span></b></h5>", unsafe_allow_html=True)
+
                 if missing_skills:
                     st.subheader('Missing Skills')
                     st.write(missing_skills)
-        elif not st.session_state.processed_resume or not st.session_state.processed_job_description:
-            st.warning("Please upload both Resume and Job Description before using ATS")
-    
-    if choice=="FeedBack Page":
+
+            elif not st.session_state.processed_resume or not st.session_state.processed_job_description:
+                st.warning("Please upload both Resume and Job Description before using ATS")
+
+    if choice == "FeedBack Page":
         st.title('Feedback')
         # Get user input
         recipient_email = st.text_input("Recipient Email:")
         subject = st.text_input("Subject:")
+        ## Write an appropriate message to the user
         message = st.text_area("Message:")
+
         # Button to send email
         if st.button("Send Email"):
             if not recipient_email or not subject or not message:
@@ -196,10 +281,51 @@ def main():
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
 
-    if choice=="About Us":
-        st.title('About Us')
-        st.text('An NLP Project by ')
-        st.text('Meet Our Team')
 
+    if choice=="About Us":
+        st.title("Meet Our Team")
+        video_path1 = "Credits.mp4"
+        st.video(video_path1)
+        
+        st.subheader("Team Members")
+        display_team_member("AbdulKadar Kapasi", "https://github.com/Abdulkadarkapasi/Abdulkadarkapasi","https://www.linkedin.com/in/abdulkadar-kapasi/")
+    
+
+        display_team_member("Aditya Verma", "https://github.com/adityaverma11","https://www.linkedin.com/in/aditya-verma-735784220/")
+
+    
+        display_team_member("Atharva Hirlekar", "https://github.com/AtharvaHirlekar/", "https://www.linkedin.com/in/atharvahirlekar/")
+
+    
+        display_team_member("Arif Khan", "https://github.com/Arif-khan27/Arif-khan27","https://www.linkedin.com/in/arifkhan5467/")
+
+    
+        display_team_member("Arin Purohit", "https://github.com/arinp10","https://www.linkedin.com/in/arin-purohit/?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app")
+
+    
+        display_team_member("Arsh Vohra", "https://github.com/arshvohra29","https://www.linkedin.com/in/arsh-vohra-76b214221/")
+
+    
+        display_team_member("Cwen Fernandes", "https://github.com/Rayonushi","https://www.linkedin.com/in/cwenfernandes/")
+
+    
+        display_team_member("Saloni Shinde", "https://github.com/saloniish","https://www.linkedin.com/in/salonishinde20/")
+
+    
+        display_team_member("Piyush Mishra", "https://github.com/Meeshra","https://www.linkedin.com/in/piyush-mishra-01593b21a/")
+
+    
+        display_team_member("Reeya Wadekar", "https://github.com/reeyaaa","https://www.linkedin.com/in/reeyawadekar/")
+
+    
+        display_team_member("Reyhan Pereira", "https://github.com/reyhanpereira2608","https://www.linkedin.com/in/reyhanpereira2608/")
+
+    
+        display_team_member("Riya Shukla", "https://github.com/riyashukla24","https://www.linkedin.com/in/riya-shukla-880b20235/")
+
+    
+        display_team_member("Shravani Mahadeshwar", "https://github.com/Shravani018","https://www.linkedin.com/in/shravani-mahadeshwar/")
+
+    
 if __name__ == "__main__":
     main()
