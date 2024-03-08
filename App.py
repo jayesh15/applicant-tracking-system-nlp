@@ -104,7 +104,7 @@ def main():
         if st.button("Process Resume", key="process_resume_button"):
             resume = st.session_state.raw_text
             jd = st.session_state.raw_text1
-            # resume_processor.load_skill_patterns("D:\\Designing\\experimento\\jz_skill_patterns.jsonl")
+            
             resume_processor.load_skill_patterns("jz_skill_patterns.jsonl")
             remails = resume_processor.extract_emails(resume)
             rlinks = resume_processor.extract_links(resume)
