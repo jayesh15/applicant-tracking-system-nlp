@@ -1,4 +1,4 @@
-# Application Tracking System
+# Applicant Tracking System
 
 Welcome to our Applicant Tracking System (ATS), a tool crafted to simplify the hiring process. Our system offers a seamless solution, transforming the traditionally manual and time-consuming task into an effortless endeavor.
 
