@@ -2,8 +2,7 @@
 
                                                                                                       
 
-![Description](https://github.com/jayesh15/applicant-tracking-system-nlp/blob/main/circle_logo.png?sanitize=true&raw=true | width=300)
-
+<img src="" alt="ATShttps://github.com/jayesh15/applicant-tracking-system-nlp/blob/main/circle_logo.png Logo" width="300">![image](https://github.com/jayesh15/applicant-tracking-system-nlp/assets/91659975/3dbd47e5-71c9-48ce-8589-e2f495a31516)
 
 Welcome to our Applicant Tracking System (ATS), a tool crafted to simplify the hiring process. Our system offers a seamless solution, transforming the traditionally manual and time-consuming task into an effortless endeavor.
 
