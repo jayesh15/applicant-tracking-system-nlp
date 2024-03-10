@@ -97,15 +97,19 @@ def main():
         st.video(video_path)
         
 
-
     if choice=="ATS Matcher":
         st.title('Resume And Job Description')
-
         # Initialize session_state
         if 'processed_resume' not in st.session_state:
             st.session_state.processed_resume = False
         if 'processed_job_description' not in st.session_state:
             st.session_state.processed_job_description = False
+        # Initialize session state variables
+        if 'resume_process' not in st.session_state:
+            st.session_state.resume_process = False
+        if 'jd_process' not in st.session_state:
+            st.session_state.jd_process = False    
+
         # Upload Resume
         docx_file = st.file_uploader('Upload Resume', type=['pdf', 'docx', 'txt'])
         if st.button("Process Resume"):
@@ -149,6 +153,7 @@ def main():
         st.header("Skill Relevance Overview")
         if st.button("Analyze Resume"):
             if st.session_state.processed_resume and st.session_state.processed_job_description:
+                st.session_state.resume_process = True
                 resume = st.session_state.raw_text
                 jd = st.session_state.raw_text1
                 resume_processor.load_skill_patterns("jz_skill_patterns.jsonl")
@@ -187,48 +192,55 @@ def main():
                 st.session_state.resume_skills=resume_skills
                 st.write('')
             else:
-                st.warning("Please upload both Resume and Job Description before using ATSa")
+                st.warning("Please upload both Resume and Job Description before using ATS")
 
         if st.button("Analyze Job Description"):
             if st.session_state.processed_resume and st.session_state.processed_job_description:
-                jd = st.session_state.raw_text1
-                job_emails=st.session_state.jemails
-                job_links=st.session_state.jlinks
-                cleaned_jd = resume_processor.remove_links_and_emails(jd, job_links, job_emails)
-                cleaned_jd = resume_processor.preprocess_resume(cleaned_jd)
-                cleaned_jd = resume_processor.remove_links_and_emails(jd, job_links, job_emails)
-                cleaned_jd = resume_processor.preprocess_resume(cleaned_jd)
-                st.subheader('Skills in Job Description')
-                jd_skills = Job_Des.jd_skill(cleaned_jd)
-                st.session_state.jd_skills=jd_skills
-                st.write(jd_skills)
-                st.write('')
+                if st.session_state.resume_process:
+                    st.session_state.jd_process = True
+                    jd = st.session_state.raw_text1
+                    job_emails=st.session_state.jemails
+                    job_links=st.session_state.jlinks
+                    cleaned_jd = resume_processor.remove_links_and_emails(jd, job_links, job_emails)
+                    cleaned_jd = resume_processor.preprocess_resume(cleaned_jd)
+                    cleaned_jd = resume_processor.remove_links_and_emails(jd, job_links, job_emails)
+                    cleaned_jd = resume_processor.preprocess_resume(cleaned_jd)
+                    st.subheader('Skills in Job Description')
+                    jd_skills = Job_Des.jd_skill(cleaned_jd)
+                    st.session_state.jd_skills=jd_skills
+                    st.write(jd_skills)
+                    st.write('')
+                else:
+                    st.warning("Please analyze the resume first.")
             else:
-                st.warning("Please upload both Resume and Job Description before using ATSb")
+                st.warning("Please upload both Resume and Job Description before using ATS")
         
         if st.button("Match Results"):
             if st.session_state.processed_resume and st.session_state.processed_job_description:
-                resume_name = docx_file.name
-                jd_name = docx_file1.name
-                jobd_skills = st.session_state.jd_skills
-                res_skills = st.session_state.resume_skills
-                res_skills_str = ' '.join(res_skills)
-                job_skills_str = ' '.join(jobd_skills)
-                corpus = [res_skills_str, job_skills_str]
-                # st.write(corpus)
-                score, missing_skills = Scoring.cal_cosine_similarity(res_skills_str, job_skills_str, corpus)
-                st.subheader('Match Results for Resume and Job Description')
-                if score >= 50:  # Adjust threshold as needed
-                    st.write(f"<h5><b><span style='color: #fd971f;'>{os.path.basename(resume_name)} is Recommended for {os.path.basename(jd_name)}</span></b></h5>", unsafe_allow_html=True)
-                    st.write(f"<h5><b><span style='color: #fd971f;'>Score: {score}</span></b></h5>", unsafe_allow_html=True)
+                if st.session_state.resume_process and st.session_state.jd_process:
+                    resume_name = docx_file.name
+                    jd_name = docx_file1.name
+                    jobd_skills = st.session_state.jd_skills
+                    res_skills = st.session_state.resume_skills
+                    res_skills_str = ' '.join(res_skills)
+                    job_skills_str = ' '.join(jobd_skills)
+                    corpus = [res_skills_str, job_skills_str]
+                    # st.write(corpus)
+                    score, missing_skills = Scoring.cal_cosine_similarity(res_skills_str, job_skills_str, corpus)
+                    st.subheader('Match Results for Resume and Job Description')
+                    if score >= 50:  # Adjust threshold as needed
+                        st.write(f"<h5><b><span style='color: #fd971f;'>{os.path.basename(resume_name)} is Recommended for {os.path.basename(jd_name)}</span></b></h5>", unsafe_allow_html=True)
+                        st.write(f"<h5><b><span style='color: #fd971f;'>Score: {score}</span></b></h5>", unsafe_allow_html=True)
+                    else:
+                        st.write(f"<h5><b><span style='color: #fd971f;'>{os.path.basename(resume_name)} is Not Recommended for {os.path.basename(jd_name)}</span></b></h5>", unsafe_allow_html=True)
+                        st.write(f"<h5><b><span style='color: #fd971f;'>Score: {score}</span></b></h5>", unsafe_allow_html=True)
+                        if missing_skills:
+                            st.subheader('Missing Skills')
+                            st.write(missing_skills)
                 else:
-                    st.write(f"<h5><b><span style='color: #fd971f;'>{os.path.basename(resume_name)} is Not Recommended for {os.path.basename(jd_name)}</span></b></h5>", unsafe_allow_html=True)
-                    st.write(f"<h5><b><span style='color: #fd971f;'>Score: {score}</span></b></h5>", unsafe_allow_html=True)
-                    if missing_skills:
-                        st.subheader('Missing Skills')
-                        st.write(missing_skills)
+                    st.warning("Please analyze both resume and job description first.")
             else:
-                st.warning("Please upload both Resume and Job Description before using ATSc")
+                st.warning("Please upload both Resume and Job Description before using ATS")
 
     if choice == "FeedBack Page":
         st.title('Feedback')
