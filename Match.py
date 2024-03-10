@@ -7,7 +7,7 @@ class Matching:
         
     def cal_cosine_similarity(self, resume, job_description, threshold=15):
         resume_processor = ResumeProcessor()  
-        resume_processor.load_skill_patterns("D:\\Designing\\experimento\\jz_skill_patterns.jsonl")
+        resume_processor.load_skill_patterns("jz_skill_patterns.jsonl")
         resume_skills = resume_processor.extracting_entities(resume)["SKILL"]
         jd = Job_Description()
         job_description_skills = resume_processor.extracting_entities(job_description)["SKILL"]
