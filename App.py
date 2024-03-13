@@ -162,15 +162,6 @@ def main():
                 cleaned_resume = resume_processor.remove_links_and_emails(resume, rlinks, remails)
                 cleaned_resume = resume_processor.preprocess_resume(cleaned_resume)
                 st.session_state.cleaned_resume=cleaned_resume
-                jemails = resume_processor.extract_emails(jd)
-                st.session_state.jemails=jemails
-                jlinks = resume_processor.extract_links(jd)
-                st.session_state.jlinks=jlinks
-                cleaned_jd = resume_processor.remove_links_and_emails(jd, jlinks, jemails)
-                cleaned_jd = resume_processor.preprocess_resume(cleaned_jd)
-                st.subheader('Common Words between Resume and Job Description')
-                common = Base_ATS.find_common_words_dict(cleaned_resume,cleaned_jd)  
-                st.write(common)
                 skill_pattern="jz_skill_patterns.jsonl"
                 ner=spacy.load('en_core_web_lg')
                 entity_ruler=ner.add_pipe("entity_ruler")
@@ -199,12 +190,17 @@ def main():
                 if st.session_state.resume_process:
                     st.session_state.jd_process = True
                     jd = st.session_state.raw_text1
-                    job_emails=st.session_state.jemails
-                    job_links=st.session_state.jlinks
-                    cleaned_jd = resume_processor.remove_links_and_emails(jd, job_links, job_emails)
+                    jemails = resume_processor.extract_emails(jd)
+                    st.session_state.jemails=jemails
+                    jlinks = resume_processor.extract_links(jd)
+                    st.session_state.jlinks=jlinks
+                    cleaned_jd = resume_processor.remove_links_and_emails(jd, jlinks, jemails)
                     cleaned_jd = resume_processor.preprocess_resume(cleaned_jd)
-                    cleaned_jd = resume_processor.remove_links_and_emails(jd, job_links, job_emails)
-                    cleaned_jd = resume_processor.preprocess_resume(cleaned_jd)
+                    cleaned_resume = st.session_state.cleaned_resume
+                    st.subheader('Common Words between Resume and Job Description')
+                    common = Base_ATS.find_common_words_dict(cleaned_resume,cleaned_jd)  
+                    st.write(common)
+                    st.write('')
                     st.subheader('Skills in Job Description')
                     jd_skills = Job_Des.jd_skill(cleaned_jd)
                     st.session_state.jd_skills=jd_skills
@@ -214,7 +210,7 @@ def main():
                     st.warning("Please analyze the resume first.")
             else:
                 st.warning("Please upload both Resume and Job Description before using ATS")
-        
+
         if st.button("Match Results"):
             if st.session_state.processed_resume and st.session_state.processed_job_description:
                 if st.session_state.resume_process and st.session_state.jd_process:
