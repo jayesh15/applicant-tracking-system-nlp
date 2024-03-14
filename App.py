@@ -224,7 +224,7 @@ def main():
                     # st.write(corpus)
                     score, missing_skills = Scoring.cal_cosine_similarity(res_skills_str, job_skills_str, corpus)
                     st.subheader('Match Results for Resume and Job Description')
-                    if score >= 50:  # Adjust threshold as needed
+                    if score >= 15:  # Adjust threshold as needed
                         st.write(f"<h5><b><span style='color: #fd971f;'>{os.path.basename(resume_name)} is Recommended for {os.path.basename(jd_name)}</span></b></h5>", unsafe_allow_html=True)
                         st.write(f"<h5><b><span style='color: #fd971f;'>Score: {score}</span></b></h5>", unsafe_allow_html=True)
                     else:
